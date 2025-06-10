@@ -3,3 +3,4 @@ openai
 python-docx
 PyMuPDF
 docx2txt
+PyPDF2
