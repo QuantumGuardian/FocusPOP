@@ -1,29 +1,26 @@
 import streamlit as st
 import openai
-import fitz  # PyMuPDF
-import docx
+import docx2txt
+import PyPDF2
+import io
 
-st.set_page_config(page_title="FocusPOP - Resume Matcher", layout="centered")
+st.title("FocusPOP - Resume Matcher & Screener")
 
-st.title("📄 FocusPOP - Resume Matcher")
-st.write("Upload a candidate's resume and paste a job description to see match % and screening questions.")
+uploaded_file = st.file_uploader("Upload Resume (PDF or DOCX)", type=["pdf", "docx"])
+job_description = st.text_area("Paste Job Description")
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+def extract_text_from_pdf(pdf_file):
+    reader = PyPDF2.PdfReader(pdf_file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
 
-def extract_text_from_pdf(file):
-    with fitz.open(stream=file.read(), filetype="pdf") as doc:
-        return " ".join([page.get_text() for page in doc])
+def extract_text_from_docx(docx_file):
+    return docx2txt.process(docx_file)
 
-def extract_text_from_docx(file):
-    doc = docx.Document(file)
-    return "\n".join([para.text for para in doc.paragraphs])
-
-uploaded_file = st.file_uploader("Upload Resume", type=["pdf", "docx"])
-job_description = st.text_area("Paste Job Description", height=200)
-
-if st.button("Match Now"):
-if uploaded_file and job_description:   
-       with st.spinner("Reading resume..."):
+if uploaded_file and job_description:
+    with st.spinner("Reading resume..."):
         if uploaded_file.name.endswith(".pdf"):
             resume_text = extract_text_from_pdf(uploaded_file)
         else:
@@ -43,9 +40,3 @@ if uploaded_file and job_description:
 
     st.success("✅ Match complete!")
     st.write(response.choices[0].message.content)
-
-
-        st.success("✅ Match complete!")
-        st.write(response["choices"][0]["message"]["content"])
-    else:
-        st.warning("Please upload a resume and paste a job description.")
